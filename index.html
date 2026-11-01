@@ -52,6 +52,8 @@ body{
 }
 .screen{display:none;flex-direction:column;flex:1;min-height:0}
 .screen.active{display:flex;animation:up .3s ease both}
+.oPane{display:none;flex-direction:column;flex:1;min-height:0}
+.oPane.on{display:flex}
 @keyframes up{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
 
 .mark{
@@ -79,6 +81,51 @@ h2{font-size:26px;line-height:1.3;font-weight:600;margin:0 0 8px;letter-spacing:
 .btn.ghost:hover{color:var(--ink-2)}
 .btn.outline{background:transparent;color:var(--ink);border-color:var(--line)}
 .btn.outline:hover{background:var(--paper-2);border-color:var(--ink-3)}
+.btn.small{padding:12px;font-size:14px;border-radius:12px}
+
+.divider{
+  display:flex;align-items:center;gap:12px;
+  margin:18px 0;color:var(--ink-3);font-size:12px;
+}
+.divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--line)}
+
+.roomCode{
+  font-size:52px;font-weight:600;letter-spacing:.16em;
+  text-align:center;margin:8px 0 6px;font-variant-numeric:tabular-nums;
+}
+.roomLabel{text-align:center;font-size:12px;color:var(--ink-3);letter-spacing:.16em;margin-bottom:26px}
+
+.waitDots{display:inline-flex;gap:5px;align-items:center;margin-left:6px}
+.waitDots i{
+  width:5px;height:5px;border-radius:50%;background:var(--ink-3);
+  animation:bounce 1.15s infinite ease-in-out;
+}
+.waitDots i:nth-child(2){animation-delay:.16s}
+.waitDots i:nth-child(3){animation-delay:.32s}
+@keyframes bounce{0%,70%,100%{opacity:.3;transform:translateY(0)}35%{opacity:1;transform:translateY(-3px)}}
+
+.seatTag{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:12.5px;color:var(--ink-2);margin-bottom:16px;
+}
+.seatTag b{font-weight:500}
+.seatTag.a b{color:var(--accent)}
+.seatTag.b b{color:var(--b)}
+
+.waitBox{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  flex:1;text-align:center;gap:10px;
+}
+.waitBox .big{font-size:22px;font-weight:600}
+.waitBox .sm{font-size:13.5px;color:var(--ink-2)}
+
+.codeInput{
+  width:100%;padding:18px;font-size:26px;font-weight:600;font-family:inherit;
+  text-align:center;letter-spacing:.3em;text-transform:uppercase;
+  background:var(--paper-2);border:1px solid var(--line);border-radius:15px;
+  outline:none;color:var(--ink);
+}
+.codeInput::placeholder{letter-spacing:.16em;font-weight:400;font-size:15px;color:var(--ink-3)}
 
 .toast{
   position:fixed;left:50%;bottom:38px;transform:translate(-50%,14px);
@@ -204,8 +251,78 @@ input[type=text]:focus{border-color:var(--ink-3)}
       直到说出同一个词。
     </p>
     <div class="spacer"></div>
-    <button class="btn primary" onclick="startGame()">开始一局</button>
-    <p class="hint">一台设备，甲先想，乙后想</p>
+    <button class="btn primary" onclick="goLobby()">两台设备，各拿各的</button>
+    <button class="btn outline" onclick="startSolo()" style="margin-top:9px">一台设备，传着玩</button>
+  </section>
+
+  <section class="screen" id="s-lobby">
+    <div class="bar"><span>开个房间</span></div>
+    <h2 class="prompt">建一个房间，<br>把链接发给 TA。</h2>
+    <div class="spacer"></div>
+    <button class="btn primary" onclick="createRoom()">开一个房间</button>
+    <div class="divider">或者加入已有房间</div>
+    <input class="codeInput" id="codeInput" placeholder="输入 6 位房间码" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false">
+    <button class="btn outline" onclick="joinByCode()" style="margin-top:11px">加入</button>
+    <div class="spacer"></div>
+    <button class="btn ghost" onclick="showScreen('s-intro')">返回</button>
+  </section>
+
+  <section class="screen" id="s-room">
+    <div class="seatTag" id="seatTag"></div>
+    <div class="roomCode" id="roomCodeText"></div>
+    <div class="roomLabel">房间码</div>
+    <div class="spacer"></div>
+    <div class="waitBox">
+      <div class="big">等 TA 进来<span class="waitDots"><i></i><i></i><i></i></span></div>
+      <div class="sm">把下面的链接发给对方就行</div>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn primary" onclick="copyInvite()">复制邀请链接</button>
+    <button class="btn ghost" onclick="leaveRoom()">算了，不玩了</button>
+  </section>
+
+  <section class="screen" id="s-online">
+    <div class="bar">
+      <span id="oRound">第 1 轮</span>
+      <span class="sep"></span>
+      <span id="oState">轮到你</span>
+    </div>
+    <div class="recall" id="oRecall"></div>
+
+    <div class="oPane" id="oInputPane">
+      <h2 class="prompt" id="oPrompt"></h2>
+      <div class="spacer"></div>
+      <div class="ideaArea">
+        <div class="ideaRow">
+          <button class="ideaBtn" onclick="onlineIdeas()">想不出来，给点灵感</button>
+        </div>
+        <div class="ideas" id="oIdeas"></div>
+      </div>
+      <div class="field">
+        <input type="text" id="oWord" placeholder="想一个词…" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="12">
+        <button class="btn primary" onclick="onlineSubmit()">就它了</button>
+      </div>
+    </div>
+
+    <div class="oPane" id="oWaitPane">
+      <div class="waitBox">
+        <div class="big">等 TA 想一个词<span class="waitDots"><i></i><i></i><i></i></span></div>
+        <div class="sm">你写的是「<span id="oMyWord"></span>」</div>
+      </div>
+    </div>
+
+    <div class="oPane" id="oRevealPane">
+      <div class="cards">
+        <div class="pcard a"><span class="plabel">你</span><span class="pword" id="oWordA"></span></div>
+        <div class="vsep" id="oVsep">×</div>
+        <div class="pcard b"><span class="plabel">TA</span><span class="pword" id="oWordB"></span></div>
+      </div>
+      <div id="oNearTip"></div>
+      <h2 id="oRevTitle"></h2>
+      <p class="sub" id="oRevSub"></p>
+      <div class="spacer"></div>
+      <button class="btn primary" id="oRevBtn" onclick="onlineNext()"></button>
+    </div>
   </section>
 
   <section class="screen" id="s-input">
@@ -264,14 +381,15 @@ input[type=text]:focus{border-color:var(--ink-3)}
     <div class="trail" id="trail"></div>
     <div class="spacer"></div>
     <button class="btn outline" onclick="shareCard()">把这一局存成图</button>
-    <button class="btn primary" onclick="startGame()" style="margin-top:9px">再玩一局</button>
-    <p class="hint">换个人玩，结果会完全不一样</p>
+    <button class="btn primary" onclick="replay()" style="margin-top:9px">再来一局</button>
+    <p class="hint" id="endHint">换个人玩，结果会完全不一样</p>
   </section>
 
 </div>
 
 <div class="toast" id="toast"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
 <script>
 var MAX_ROUNDS = 15;
 
@@ -291,6 +409,8 @@ var IDEAS = ['火锅','便利店','地铁','晚霞','耳机','台风','考试','
 var $ = function (id) { return document.getElementById(id); };
 
 function showScreen(id) {
+  var cur = document.querySelector('.screen.active');
+  if (cur && cur.id === id) return;
   var all = document.querySelectorAll('.screen');
   for (var i = 0; i < all.length; i++) all[i].classList.remove('active');
   $(id).classList.add('active');
@@ -306,7 +426,9 @@ function norm(s) {
 
 function playerName(p) { return p === 'a' ? '甲' : '乙'; }
 
-function startGame() {
+function startSolo() {
+  online.active = false;
+  stopPolling();
   state = { round: 1, history: [], cur: { a: null, b: null }, turn: 'a', hit: false };
   renderInput();
 }
@@ -480,13 +602,15 @@ function renderEnd(success) {
     $('endMark').textContent = '相遇';
     $('endMark').style.color = 'var(--accent)';
     $('endWord').textContent = '「' + last.a + '」';
-    $('endSub').textContent = '用了 ' + state.round + ' 轮，你们的脑回路在这里碰上了。';
+    $('endSub').textContent = '用了 ' + state.history.length + ' 轮，你们的脑回路在这里碰上了。';
   } else {
     $('endMark').textContent = '未相遇';
     $('endMark').style.color = 'var(--ink-3)';
     $('endWord').textContent = '两条平行的线';
     $('endSub').textContent = '十五轮都没撞上。也挺难得的。';
   }
+
+  $('endHint').textContent = online.active ? '想再来一局，回首页重新开个房间' : '换个人玩，结果会完全不一样';
 
   showScreen('s-end');
 }
@@ -648,11 +772,467 @@ function shareCard() {
   }, 'image/png');
 }
 
+var CLOUD_CFG = {
+  endpoint: 'https://same-word-57483.app.workbuddy.host',
+  oauthRelayBaseUrl: 'https://www.workbuddy.cn/v2/as/genie-baas/oauth',
+  publishableKey: 'wbpk_twQCOsdXd63DGC5oLgtjwT_LjpG4ZQBOGaVdNeAJ5VgKystlaRIs3jx'
+};
+
+var cloud = null;
+
+(function () {
+  if (!window.fetch) return;
+  var _f = window.fetch;
+  window.fetch = function (input, init) {
+    var url = typeof input === 'string' ? input : (input && input.url) || '';
+    if (url.indexOf('/.cloud/') > -1) {
+      init = init || {};
+      try {
+        var h = new Headers(init.headers || {});
+        h.set('Cache-Control', 'no-cache, no-store');
+        h.set('Pragma', 'no-cache');
+        init.headers = h;
+      } catch (e) {}
+      init.cache = 'no-store';
+    }
+    return _f.call(this, input, init);
+  };
+})();
+
+try {
+  if (window.WorkBuddyCloud && WorkBuddyCloud.createWorkBuddyCloud) {
+    cloud = WorkBuddyCloud.createWorkBuddyCloud(CLOUD_CFG);
+  }
+} catch (e) { cloud = null; }
+
+var SC = '';
+try {
+  var _sp = new URLSearchParams(location.search);
+  var _sc = _sp.get('sharecode');
+  if (_sc) {
+    SC = _sc;
+    try { localStorage.setItem('tc_sc', _sc); } catch (e) {}
+  } else {
+    try { SC = localStorage.getItem('tc_sc') || ''; } catch (e) {}
+  }
+} catch (e) {}
+
+var online = {
+  active: false,
+  code: null,
+  seat: 'a',
+  moves: [],
+  seenRound: 0,
+  timer: null,
+  bJoined: false
+};
+
+var lastPane = '', lastInputRound = 0, ticking = false;
+
+function onlineReady() {
+  if (cloud && cloud.database) return true;
+  toast('联机功能没加载出来，检查网络后再试');
+  return false;
+}
+
+function goLobby() {
+  if (!onlineReady()) return;
+  if (!/\.workbuddy\.host$/.test(location.hostname)) {
+    toast('联机版要在正式地址打开，这里只能玩单机');
+    return;
+  }
+  $('codeInput').value = '';
+  showScreen('s-lobby');
+}
+
+function genCode() {
+  var c = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  var s = '';
+  for (var i = 0; i < 6; i++) s += c.charAt(Math.floor(Math.random() * c.length));
+  return s;
+}
+
+async function createRoom() {
+  if (!onlineReady()) return;
+  var code = null, ok = false;
+
+  for (var t = 0; t < 4 && !ok; t++) {
+    code = genCode();
+    var r = await cloud.database.from('rooms').insert({ code: code });
+    if (!r.error) ok = true;
+    else if (String(r.error.code || '').indexOf('23505') === -1) break;
+  }
+
+  if (!ok) { toast('房间没开成，再试一次'); return; }
+
+  enterRoom(code, 'a');
+  renderRoom();
+  showScreen('s-room');
+}
+
+function enterRoom(code, seat) {
+  online.active = true;
+  online.code = code;
+  online.seat = seat;
+  online.moves = [];
+  online.seenRound = 0;
+  online.bJoined = (seat === 'b');
+  lastPane = '';
+  lastInputRound = 0;
+  try { localStorage.setItem('tc_seat_' + code, seat); } catch (e) {}
+  startPolling();
+}
+
+function renderRoom() {
+  $('roomCodeText').textContent = online.code || '';
+  var tag = $('seatTag');
+  tag.className = 'seatTag ' + online.seat;
+  tag.innerHTML = '你是 <b>' + (online.seat === 'a' ? '甲' : '乙') + '</b>，房间还没坐满';
+}
+
+function inviteUrl() {
+  var q = 'r=' + online.code;
+  if (SC) q += '&sharecode=' + encodeURIComponent(SC);
+  return location.origin + location.pathname + '?' + q;
+}
+
+function copyInvite() {
+  var url = inviteUrl();
+  if (navigator.share) {
+    navigator.share({
+      title: '同词相遇',
+      text: '来玩一局，看我们第几轮能想到同一个词',
+      url: url
+    }).catch(function () { copyText(url); });
+    return;
+  }
+  copyText(url);
+}
+
+function copyText(t) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(t).then(function () {
+      toast('链接已复制，发给 TA');
+    }, function () { fallbackCopy(t); });
+  } else {
+    fallbackCopy(t);
+  }
+}
+
+function fallbackCopy(t) {
+  var ta = document.createElement('textarea');
+  ta.value = t;
+  ta.style.position = 'fixed';
+  ta.style.top = '-999px';
+  document.body.appendChild(ta);
+  ta.select();
+  var ok = false;
+  try { ok = document.execCommand('copy'); } catch (e) {}
+  document.body.removeChild(ta);
+  toast(ok ? '链接已复制，发给 TA' : '复制失败，手动记下房间码');
+}
+
+function joinByCode() {
+  if (!onlineReady()) return;
+  var code = ($('codeInput').value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (code.length !== 6) { toast('房间码是 6 位'); return; }
+  joinRoom(code);
+}
+
+async function joinRoom(code) {
+  if (!onlineReady()) return;
+
+  var q = await cloud.database.rpc('room_status', { p_code: code });
+  if (q.error) { toast('连不上，再试一次'); return; }
+  if (!q.data || !q.data.length) { toast('没找到这个房间'); return; }
+  if (q.data[0].b_joined) { toast('这个房间已经满了'); return; }
+
+  var up = await cloud.database.from('rooms')
+    .update({ b_joined: true, updated_at: new Date().toISOString() })
+    .eq('code', code)
+    .eq('b_joined', false)
+    .select();
+
+  if (up.error) { toast('进不去，再试一次'); return; }
+  if (!up.data || !up.data.length) { toast('这个房间已经满了'); return; }
+
+  enterRoom(code, 'b');
+  toast('进房间了，可以开始了');
+}
+
+function leaveRoom() {
+  stopPolling();
+  online.active = false;
+  online.code = null;
+  showScreen('s-intro');
+}
+
+function startPolling() {
+  stopPolling();
+  online.timer = setInterval(tick, 1600);
+  tick();
+}
+
+function stopPolling() {
+  if (online.timer) { clearInterval(online.timer); online.timer = null; }
+}
+
+async function tick() {
+  if (!online.active || ticking || !cloud) return;
+  ticking = true;
+  try {
+    if (online.seat === 'a' && !online.bJoined) {
+      var q = await cloud.database.rpc('room_status', { p_code: online.code });
+      if (q.data && q.data.length && q.data[0].b_joined) online.bJoined = true;
+      else { ticking = false; return; }
+    }
+    await pullMoves();
+  } catch (e) {
+  } finally {
+    ticking = false;
+  }
+}
+
+async function pullMoves() {
+  var m = await cloud.database.rpc('room_moves', { p_code: online.code });
+  if (m.error) return;
+  online.moves = (m.data || []).map(function (x) {
+    return { round: x.rnd, seat: x.seat, word: x.word };
+  });
+  renderOnline();
+}
+
+function derive() {
+  var byRound = {};
+  online.moves.forEach(function (m) {
+    if (!byRound[m.round]) byRound[m.round] = {};
+    byRound[m.round][m.seat] = m.word;
+  });
+
+  var other = online.seat === 'a' ? 'b' : 'a';
+  var history = [];
+  var r = 1, hit = false;
+
+  while (byRound[r] && byRound[r].a !== undefined && byRound[r].b !== undefined) {
+    var a = byRound[r].a, b = byRound[r].b;
+    var isHit = norm(a) === norm(b);
+    history.push({ a: a, b: b, hit: isHit });
+    if (isHit) { hit = true; break; }
+    r++;
+  }
+
+  var cur = byRound[r] || {};
+  return {
+    round: r,
+    history: history,
+    hit: hit,
+    over: hit || r > MAX_ROUNDS,
+    mineDone: cur[online.seat] !== undefined,
+    theirsDone: cur[other] !== undefined,
+    myWord: cur[online.seat]
+  };
+}
+
+function showPane(id) {
+  if (lastPane === id) return;
+  lastPane = id;
+  ['oInputPane', 'oWaitPane', 'oRevealPane'].forEach(function (p) {
+    $(p).classList.toggle('on', p === id);
+  });
+}
+
+function renderOnline() {
+  var v = derive();
+  var unseen = v.history.length > online.seenRound;
+
+  if (v.over && !unseen) { finishOnline(v); return; }
+  if (unseen) { showRevealOnline(v); return; }
+  if (v.mineDone) { showWaitOnline(v); return; }
+  showInputOnline(v);
+}
+
+function renderRecallOnline(v) {
+  var el = $('oRecall');
+  if (!v.history.length) { el.innerHTML = ''; el.style.display = 'none'; return; }
+  var prev = v.history[v.history.length - 1];
+  var mine = online.seat === 'a' ? prev.a : prev.b;
+  var theirs = online.seat === 'a' ? prev.b : prev.a;
+  el.style.display = 'flex';
+  el.innerHTML = '<span>上一轮</span>' +
+    '<span class="rw a">' + esc(mine) + '</span>' +
+    '<span class="rw b">' + esc(theirs) + '</span>';
+}
+
+function showInputOnline(v) {
+  showScreen('s-online');
+  $('oRound').textContent = '第 ' + v.round + ' 轮';
+  $('oState').textContent = v.theirsDone ? 'TA 已经想好了' : '轮到你';
+  renderRecallOnline(v);
+
+  $('oPrompt').innerHTML = v.history.length === 0
+    ? '随便想一个词，<span class="em">别商量</span>。'
+    : '想一个<span class="em">和这两个词都有关</span>的词。';
+
+  if (lastInputRound !== v.round) {
+    lastInputRound = v.round;
+    $('oWord').value = '';
+    $('oIdeas').innerHTML = '';
+    setTimeout(function () { if (lastPane === 'oInputPane') $('oWord').focus(); }, 260);
+  }
+
+  showPane('oInputPane');
+}
+
+function showWaitOnline(v) {
+  showScreen('s-online');
+  $('oRound').textContent = '第 ' + v.round + ' 轮';
+  $('oState').textContent = '等 TA';
+  renderRecallOnline(v);
+  $('oMyWord').textContent = v.myWord || '';
+  showPane('oWaitPane');
+}
+
+function showRevealOnline(v) {
+  showScreen('s-online');
+  var last = v.history[v.history.length - 1];
+  var mine = online.seat === 'a' ? last.a : last.b;
+  var theirs = online.seat === 'a' ? last.b : last.a;
+
+  $('oRound').textContent = '第 ' + v.history.length + ' 轮';
+  $('oState').textContent = last.hit ? '撞上了' : '没撞上';
+  $('oRecall').style.display = 'none';
+  $('oWordA').textContent = mine;
+  $('oWordB').textContent = theirs;
+
+  var sep = $('oVsep');
+  sep.textContent = last.hit ? '＝' : '×';
+  sep.className = 'vsep' + (last.hit ? ' hit' : '');
+
+  $('oNearTip').innerHTML = (!last.hit && isNear(mine, theirs))
+    ? '<div class="nearTip">你们说得几乎一样，只是字不同。</div>'
+    : '';
+
+  if (last.hit) {
+    $('oRevTitle').textContent = '相遇了';
+    $('oRevSub').textContent = '你们想到的是同一个词。';
+    $('oRevBtn').textContent = '看看这一路';
+  } else if (v.over) {
+    $('oRevTitle').textContent = '还是差一点';
+    $('oRevSub').textContent = '十五轮了，两条线始终没合上。';
+    $('oRevBtn').textContent = '看看这一路';
+  } else {
+    $('oRevTitle').textContent = '没撞上';
+    $('oRevSub').textContent = '从这两个词出发，再想一个。';
+    $('oRevBtn').textContent = '进入第 ' + (v.history.length + 1) + ' 轮';
+  }
+
+  showPane('oRevealPane');
+}
+
+function onlineNext() {
+  var v = derive();
+  online.seenRound = v.history.length;
+  if (v.over) { finishOnline(v); return; }
+  lastInputRound = 0;
+  lastPane = '';
+  renderOnline();
+}
+
+function finishOnline(v) {
+  stopPolling();
+  state.history = v.history;
+  state.hit = v.hit;
+  renderEnd(v.hit);
+}
+
+async function onlineSubmit() {
+  var w = ($('oWord').value || '').trim().replace(/\s+/g, '');
+  if (!w) { $('oWord').focus(); return; }
+  if (w.length > 12) w = w.slice(0, 12);
+
+  var v = derive();
+  var r = await cloud.database.from('moves').insert({
+    room_code: online.code,
+    round: v.round,
+    seat: online.seat,
+    word: w
+  });
+
+  if (r.error) {
+    if (String(r.error.code || '').indexOf('23505') > -1) toast('这一轮你已经交过了');
+    else toast('没发出去，再试一次');
+    return;
+  }
+
+  $('oWord').value = '';
+  $('oWord').blur();
+  online.seenRound = v.history.length;
+  await pullMoves();
+}
+
+function onlineIdeas() {
+  var pool = IDEAS.slice();
+  var pick = [];
+  for (var i = 0; i < 3; i++) pick.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
+  var box = $('oIdeas');
+  box.innerHTML = '';
+  pick.forEach(function (w) {
+    var b = document.createElement('button');
+    b.className = 'idea';
+    b.textContent = w;
+    b.onclick = function () { $('oWord').value = w; };
+    box.appendChild(b);
+  });
+}
+
+function replay() {
+  if (online.active) {
+    stopPolling();
+    online.active = false;
+    showScreen('s-intro');
+    toast('想再来一局，就再开一个房间');
+    return;
+  }
+  startSolo();
+}
+
+function bootRoute() {
+  var p = new URLSearchParams(location.search);
+  var code = (p.get('r') || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (code.length !== 6) return false;
+
+  if (!onlineReady()) return false;
+
+  var seat = null;
+  try { seat = localStorage.getItem('tc_seat_' + code); } catch (e) {}
+
+  if (seat === 'a' || seat === 'b') {
+    enterRoom(code, seat);
+    return true;
+  }
+
+  joinRoom(code);
+  return true;
+}
+
+$('codeInput').addEventListener('input', function () {
+  this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+});
+$('codeInput').addEventListener('keydown', function (e) {
+  if (e.key === 'Enter') { e.preventDefault(); joinByCode(); }
+});
+$('oWord').addEventListener('keydown', function (e) {
+  if (e.isComposing || composing) return;
+  if (e.key === 'Enter') { e.preventDefault(); onlineSubmit(); }
+});
+
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function () {
     navigator.serviceWorker.register('sw.js').catch(function () {});
   });
 }
+
+try { bootRoute(); } catch (e) {}
 </script>
 </body>
 </html>
