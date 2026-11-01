@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F6F1E4">
+<title>同词相遇 · 你们的脑回路第几轮才能撞上</title>
+<meta name="description" content="两个人各自想一个词，同时揭晓。没撞上，就从这两个词继续联想，直到说出同一个词。一台设备就能玩。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="同词相遇">
+<meta property="og:description" content="你们的脑回路，第几轮才能撞上">
+<meta property="og:image" content="og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
+<style>
+:root{
+  --paper:#F6F1E4;
+  --paper-2:#FFFCF3;
+  --ink:#1E1B16;
+  --ink-2:#6B6459;
+  --ink-3:#A79E8D;
+  --line:#E2D9C6;
+  --accent:#BF4229;
+  --accent-soft:#F4DCD4;
+  --b:#2F5D7C;
+  --b-soft:#DCE7EF;
+  --chip:#EEE7D6;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Source Han Sans SC",sans-serif;
+  -webkit-font-smoothing:antialiased;
+  font-size:15px;
+  line-height:1.6;
+}
+.app{
+  max-width:460px;
+  margin:0 auto;
+  min-height:100dvh;
+  padding:28px 22px calc(26px + env(safe-area-inset-bottom));
+  display:flex;
+  flex-direction:column;
+}
+.screen{display:none;flex-direction:column;flex:1;min-height:0}
+.screen.active{display:flex;animation:up .3s ease both}
+@keyframes up{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
+
+.mark{
+  font-size:10px;letter-spacing:.42em;color:var(--ink-3);
+  font-weight:500;text-transform:uppercase;margin-bottom:14px;
+}
+h1{
+  font-size:44px;line-height:1.15;font-weight:600;
+  letter-spacing:.02em;margin:0 0 10px;
+}
+h2{font-size:26px;line-height:1.3;font-weight:600;margin:0 0 8px;letter-spacing:.01em}
+.sub{font-size:15px;color:var(--ink-2);margin:0;line-height:1.65}
+.hint{font-size:12.5px;color:var(--ink-3);text-align:center;margin:14px 0 0}
+
+.btn{
+  width:100%;padding:17px;border-radius:15px;
+  border:1px solid transparent;font-size:16px;font-weight:600;
+  font-family:inherit;cursor:pointer;letter-spacing:.02em;
+  transition:transform .12s ease,background .18s ease,opacity .18s ease;
+}
+.btn:active{transform:scale(.985)}
+.btn.primary{background:var(--ink);color:var(--paper-2)}
+.btn.primary:hover{background:#35302A}
+.btn.ghost{background:transparent;color:var(--ink-3);font-weight:400;font-size:13.5px;padding:12px}
+.btn.ghost:hover{color:var(--ink-2)}
+.btn.outline{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn.outline:hover{background:var(--paper-2);border-color:var(--ink-3)}
+
+.toast{
+  position:fixed;left:50%;bottom:38px;transform:translate(-50%,14px);
+  background:rgba(30,27,22,.94);color:#F6F1E4;
+  font-size:13.5px;padding:11px 20px;border-radius:999px;
+  opacity:0;pointer-events:none;transition:opacity .22s ease,transform .22s ease;
+  z-index:99;max-width:80vw;text-align:center;
+}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+
+.bar{
+  display:flex;align-items:center;gap:9px;
+  font-size:12px;color:var(--ink-3);letter-spacing:.04em;
+  margin-bottom:22px;
+}
+.bar .sep{width:3px;height:3px;border-radius:50%;background:var(--ink-3);opacity:.5}
+.bar .who{font-weight:500}
+.bar .who.a{color:var(--accent)}
+.bar .who.b{color:var(--b)}
+
+.recall{display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin-bottom:18px;font-size:12px;color:var(--ink-3)}
+.rw{padding:4px 11px;border-radius:999px;font-size:12.5px;font-weight:500;background:var(--chip);color:var(--ink)}
+.rw.a{background:var(--accent-soft);color:#8E2E1C}
+.rw.b{background:var(--b-soft);color:#1F4A67}
+
+.prompt{font-size:23px;line-height:1.45;font-weight:600;margin:0 0 22px;letter-spacing:.01em}
+.prompt .em{color:var(--accent)}
+
+input[type=text]{
+  width:100%;padding:19px 16px;
+  font-size:23px;font-weight:500;font-family:inherit;
+  color:var(--ink);background:var(--paper-2);
+  border:1px solid var(--line);border-radius:15px;
+  outline:none;text-align:center;letter-spacing:.06em;
+  transition:border-color .18s ease,background .18s ease;
+}
+input[type=text]::placeholder{color:var(--ink-3);font-weight:400;letter-spacing:.04em}
+input[type=text]:focus{border-color:var(--ink-3)}
+
+.field{display:flex;flex-direction:column;gap:11px;margin-top:14px}
+.ideaArea{padding-bottom:2px}
+.ideaRow{display:flex;justify-content:flex-end}
+.ideaBtn{
+  background:none;border:none;font-family:inherit;font-size:12.5px;
+  color:var(--ink-3);cursor:pointer;padding:4px 0;text-decoration:underline;
+  text-underline-offset:3px;text-decoration-color:var(--line);
+}
+.ideaBtn:hover{color:var(--ink-2)}
+.ideas{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+.idea{
+  padding:6px 12px;border-radius:999px;background:var(--chip);
+  border:1px solid var(--line);font-size:13px;color:var(--ink-2);
+  cursor:pointer;font-family:inherit;transition:background .16s,color .16s;
+}
+.idea:hover{background:var(--accent-soft);color:#8E2E1C;border-color:transparent}
+
+.handoff{justify-content:center;text-align:center}
+.handoff .big{font-size:32px;font-weight:600;letter-spacing:.02em;margin:0 0 12px}
+.handoff .big .a{color:var(--accent)}
+.handoff .big .b{color:var(--b)}
+.handoff .note{font-size:14px;color:var(--ink-2);line-height:1.7;margin:0 0 6px}
+.handoff .recall{justify-content:center;margin-top:20px;margin-bottom:34px}
+
+.cards{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:9px;margin-bottom:26px}
+.pcard{
+  background:var(--paper-2);border:1px solid var(--line);
+  border-radius:17px;padding:20px 11px;min-height:108px;
+  display:flex;flex-direction:column;justify-content:center;align-items:center;gap:9px;
+}
+.pcard.a{animation:inL .42s cubic-bezier(.22,.85,.3,1) both}
+.pcard.b{animation:inR .42s cubic-bezier(.22,.85,.3,1) .09s both}
+@keyframes inL{from{opacity:0;transform:translateX(-26px)}to{opacity:1;transform:none}}
+@keyframes inR{from{opacity:0;transform:translateX(26px)}to{opacity:1;transform:none}}
+.plabel{font-size:10.5px;letter-spacing:.16em;font-weight:500}
+.pcard.a .plabel{color:var(--accent)}
+.pcard.b .plabel{color:var(--b)}
+.pword{font-size:19px;font-weight:600;line-height:1.35;word-break:break-word;text-align:center}
+.vsep{font-size:17px;color:var(--ink-3);text-align:center;width:26px}
+.vsep.hit{color:var(--accent);font-size:24px;animation:pop .45s cubic-bezier(.2,1.5,.4,1) .3s both}
+@keyframes pop{from{opacity:0;transform:scale(.4)}to{opacity:1;transform:scale(1)}}
+.nearTip{
+  font-size:12.5px;color:var(--ink-2);background:var(--chip);
+  border-radius:10px;padding:10px 13px;margin:-14px 0 22px;line-height:1.55;
+}
+
+.endTop{text-align:center;margin-bottom:8px}
+.endMark{font-size:13px;letter-spacing:.34em;color:var(--accent);font-weight:500;margin-bottom:12px}
+.endWord{font-size:38px;font-weight:600;line-height:1.2;margin:0 0 6px;word-break:break-word}
+.endSub{font-size:14px;color:var(--ink-2);margin:0}
+
+.trail{display:flex;flex-direction:column;margin:26px 0 30px}
+.trailRow{
+  display:grid;grid-template-columns:1fr 30px 1fr;align-items:center;gap:8px;
+  padding:11px 0;border-bottom:1px dashed var(--line);
+  animation:up .34s ease both;
+}
+.trailRow:last-child{border-bottom:none}
+.trailRow .tw{font-size:14.5px;font-weight:500;line-height:1.4;word-break:break-word}
+.trailRow .tw.a{text-align:right;color:#8E2E1C}
+.trailRow .tw.b{text-align:left;color:#1F4A67}
+.trailRow .tm{text-align:center;font-size:12px;color:var(--ink-3)}
+.trailRow .tm.hit{color:var(--accent);font-size:14px}
+.spacer{flex:1;min-height:8px}
+
+@media (max-width:360px){
+  h1{font-size:37px}
+  .prompt{font-size:20px}
+  .pword{font-size:17px}
+  .endWord{font-size:31px}
+}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+  <section class="screen active" id="s-intro">
+    <div class="spacer"></div>
+    <div class="mark">Same word</div>
+    <h1>同词相遇</h1>
+    <p class="sub">
+      两个人各自想一个词，同时揭晓。<br>
+      没撞上，就从这两个词继续往下联想，<br>
+      直到说出同一个词。
+    </p>
+    <div class="spacer"></div>
+    <button class="btn primary" onclick="startGame()">开始一局</button>
+    <p class="hint">一台设备，甲先想，乙后想</p>
+  </section>
+
+  <section class="screen" id="s-input">
+    <div class="bar">
+      <span id="roundLabel">第 1 轮</span>
+      <span class="sep"></span>
+      <span class="who a" id="playerLabel">甲 想词</span>
+    </div>
+    <div class="recall" id="recall"></div>
+    <h2 class="prompt" id="promptText"></h2>
+    <div class="spacer"></div>
+    <div class="ideaArea">
+      <div class="ideaRow">
+        <button class="ideaBtn" onclick="giveIdeas()">想不出来，给点灵感</button>
+      </div>
+      <div class="ideas" id="ideas"></div>
+    </div>
+    <div class="field">
+      <input type="text" id="wordInput" placeholder="想一个词…" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="12">
+      <button class="btn primary" onclick="submitWord()">就它了</button>
+    </div>
+  </section>
+
+  <section class="screen handoff" id="s-handoff">
+    <h2 class="big" id="handoffWho"></h2>
+    <p class="note" id="handoffNote"></p>
+    <div class="recall" id="handoffRecall"></div>
+    <button class="btn primary" id="handoffBtn" onclick="resumeInput()">开始</button>
+  </section>
+
+  <section class="screen" id="s-reveal">
+    <div class="bar">
+      <span id="revealRound">第 1 轮</span>
+      <span class="sep"></span>
+      <span id="revealState">揭晓</span>
+    </div>
+    <div class="cards">
+      <div class="pcard a"><span class="plabel">甲</span><span class="pword" id="wordA"></span></div>
+      <div class="vsep" id="vsep">×</div>
+      <div class="pcard b"><span class="plabel">乙</span><span class="pword" id="wordB"></span></div>
+    </div>
+    <div id="nearTip"></div>
+    <h2 id="revealTitle"></h2>
+    <p class="sub" id="revealSub"></p>
+    <div class="spacer"></div>
+    <button class="btn primary" id="revealBtn" onclick="afterReveal()"></button>
+  </section>
+
+  <section class="screen" id="s-end">
+    <div class="spacer"></div>
+    <div class="endTop">
+      <div class="endMark" id="endMark">相遇</div>
+      <h2 class="endWord" id="endWord"></h2>
+      <p class="endSub" id="endSub"></p>
+    </div>
+    <div class="trail" id="trail"></div>
+    <div class="spacer"></div>
+    <button class="btn outline" onclick="shareCard()">把这一局存成图</button>
+    <button class="btn primary" onclick="startGame()" style="margin-top:9px">再玩一局</button>
+    <p class="hint">换个人玩，结果会完全不一样</p>
+  </section>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+var MAX_ROUNDS = 15;
+
+var state = {
+  round: 1,
+  history: [],
+  cur: { a: null, b: null },
+  turn: 'a',
+  hit: false
+};
+
+var IDEAS = ['火锅','便利店','地铁','晚霞','耳机','台风','考试','泡面','萤火虫','豆腐',
+  '篮球场','旧书店','信号','失眠','橘子汽水','下雪','星期二','外卖','窗台','打喷嚏',
+  '毕业','充电线','月亮','快递','停车场','下雨天','电影院','窗帘','影子','半糖','钥匙',
+  '凌晨','薄荷','台阶','胃','划水','青春期'];
+
+var $ = function (id) { return document.getElementById(id); };
+
+function showScreen(id) {
+  var all = document.querySelectorAll('.screen');
+  for (var i = 0; i < all.length; i++) all[i].classList.remove('active');
+  $(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function norm(s) {
+  var t = s.trim().toLowerCase();
+  try { t = t.normalize('NFKC'); } catch (e) {}
+  t = t.replace(/[\s\p{P}\p{S}]/gu, '');
+  return t;
+}
+
+function playerName(p) { return p === 'a' ? '甲' : '乙'; }
+
+function startGame() {
+  state = { round: 1, history: [], cur: { a: null, b: null }, turn: 'a', hit: false };
+  renderInput();
+}
+
+function renderRecall(el, prev) {
+  if (!prev) { el.innerHTML = ''; el.style.display = 'none'; return; }
+  el.style.display = 'flex';
+  el.innerHTML = '<span>上一轮</span>' +
+    '<span class="rw a">' + esc(prev.a) + '</span>' +
+    '<span class="rw b">' + esc(prev.b) + '</span>';
+}
+
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+
+function renderInput() {
+  var prev = state.history.length ? state.history[state.history.length - 1] : null;
+  $('roundLabel').textContent = '第 ' + state.round + ' 轮';
+
+  var who = $('playerLabel');
+  who.textContent = playerName(state.turn) + ' 想词';
+  who.className = 'who ' + state.turn;
+
+  renderRecall($('recall'), prev);
+
+  var p = $('promptText');
+  if (state.round === 1) {
+    p.innerHTML = '随便想一个词，<span class="em">别商量</span>。';
+  } else {
+    p.innerHTML = '想一个<span class="em">和这两个词都有关</span>的词。';
+  }
+
+  $('ideas').innerHTML = '';
+  $('wordInput').value = '';
+  showScreen('s-input');
+  setTimeout(function () { $('wordInput').focus(); }, 280);
+}
+
+function giveIdeas() {
+  var pool = IDEAS.slice();
+  var pick = [];
+  for (var i = 0; i < 3; i++) pick.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
+  var box = $('ideas');
+  box.innerHTML = '';
+  pick.forEach(function (w) {
+    var b = document.createElement('button');
+    b.className = 'idea';
+    b.textContent = w;
+    b.onclick = function () { $('wordInput').value = w; };
+    box.appendChild(b);
+  });
+}
+
+function submitWord() {
+  var raw = $('wordInput').value.trim();
+  var w = raw.replace(/\s+/g, '');
+  if (!w) {
+    $('wordInput').focus();
+    return;
+  }
+  if (w.length > 12) w = w.slice(0, 12);
+
+  state.cur[state.turn] = w;
+
+  if (state.turn === 'a') {
+    state.turn = 'b';
+    renderHandoff();
+  } else {
+    renderReveal();
+  }
+}
+
+function renderHandoff() {
+  $('handoffWho').innerHTML = '交给 <span class="b">乙</span>';
+  $('handoffNote').textContent = '甲 已经想好了。把设备递过去，别偷看。';
+  var prev = state.history.length ? state.history[state.history.length - 1] : null;
+  renderRecall($('handoffRecall'), prev);
+  $('handoffBtn').textContent = '我是 乙，开始';
+  showScreen('s-handoff');
+}
+
+function resumeInput() {
+  renderInput();
+}
+
+function renderReveal() {
+  var a = state.cur.a, b = state.cur.b;
+  var same = norm(a) === norm(b);
+  state.hit = same;
+
+  $('revealRound').textContent = '第 ' + state.round + ' 轮';
+  $('revealState').textContent = same ? '撞上了' : '没撞上';
+  $('wordA').textContent = a;
+  $('wordB').textContent = b;
+
+  var sep = $('vsep');
+  sep.textContent = same ? '＝' : '×';
+  sep.className = 'vsep' + (same ? ' hit' : '');
+
+  var tip = $('nearTip');
+  if (!same && isNear(a, b)) {
+    tip.innerHTML = '<div class="nearTip">你们说得几乎一样，只是字不同。</div>';
+  } else {
+    tip.innerHTML = '';
+  }
+
+  var title = $('revealTitle'), sub = $('revealSub'), btn = $('revealBtn');
+
+  if (same) {
+    state.history.push({ a: a, b: b, hit: true });
+    title.textContent = '相遇了';
+    sub.textContent = '你们想到的是同一个词。';
+    btn.textContent = '看看这一路';
+  } else {
+    state.history.push({ a: a, b: b, hit: false });
+    if (state.round >= MAX_ROUNDS) {
+      title.textContent = '还是差一点';
+      sub.textContent = '十五轮了，两条线始终没合上。';
+      btn.textContent = '看看这一路';
+    } else {
+      title.textContent = '没撞上';
+      sub.textContent = '从这两个词出发，再想一个。';
+      btn.textContent = '进入第 ' + (state.round + 1) + ' 轮';
+    }
+  }
+
+  showScreen('s-reveal');
+}
+
+function isNear(a, b) {
+  var x = norm(a), y = norm(b);
+  if (!x || !y || x === y) return false;
+  if (x.length < 2 || y.length < 2) return false;
+  if (x.indexOf(y) > -1 || y.indexOf(x) > -1) return true;
+  var short = x.length <= y.length ? x : y;
+  var long = x.length <= y.length ? y : x;
+  var common = 0;
+  for (var i = 0; i < short.length; i++) if (long.indexOf(short[i]) > -1) common++;
+  return common / short.length >= 0.8;
+}
+
+function afterReveal() {
+  if (state.hit) { renderEnd(true); return; }
+  if (state.round >= MAX_ROUNDS) { renderEnd(false); return; }
+  state.round++;
+  state.turn = 'a';
+  state.cur = { a: null, b: null };
+  renderInput();
+}
+
+function renderEnd(success) {
+  var trail = $('trail');
+  trail.innerHTML = '';
+
+  state.history.forEach(function (r, i) {
+    var row = document.createElement('div');
+    row.className = 'trailRow';
+    row.style.animationDelay = (i * 45) + 'ms';
+    row.innerHTML =
+      '<div class="tw a">' + esc(r.a) + '</div>' +
+      '<div class="tm' + (r.hit ? ' hit' : '') + '">' + (r.hit ? '＝' : '×') + '</div>' +
+      '<div class="tw b">' + esc(r.b) + '</div>';
+    trail.appendChild(row);
+  });
+
+  if (success) {
+    var last = state.history[state.history.length - 1];
+    $('endMark').textContent = '相遇';
+    $('endMark').style.color = 'var(--accent)';
+    $('endWord').textContent = '「' + last.a + '」';
+    $('endSub').textContent = '用了 ' + state.round + ' 轮，你们的脑回路在这里碰上了。';
+  } else {
+    $('endMark').textContent = '未相遇';
+    $('endMark').style.color = 'var(--ink-3)';
+    $('endWord').textContent = '两条平行的线';
+    $('endSub').textContent = '十五轮都没撞上。也挺难得的。';
+  }
+
+  showScreen('s-end');
+}
+
+var composing = false;
+$('wordInput').addEventListener('compositionstart', function () { composing = true; });
+$('wordInput').addEventListener('compositionend', function () { composing = false; });
+$('wordInput').addEventListener('keydown', function (e) {
+  if (e.isComposing || composing) return;
+  if (e.key === 'Enter') { e.preventDefault(); submitWord(); }
+});
+
+var SANS = '"PingFang SC","Microsoft YaHei","Hiragino Sans GB",sans-serif';
+
+function toast(msg) {
+  var t = $('toast');
+  t.textContent = msg;
+  t.classList.add('on');
+  clearTimeout(t._tid);
+  t._tid = setTimeout(function () { t.classList.remove('on'); }, 2100);
+}
+
+function spaced(g, text, cx, y, gap) {
+  var chars = text.split(''), total = 0, i;
+  for (i = 0; i < chars.length; i++) total += g.measureText(chars[i]).width + gap;
+  total -= gap;
+  var x = cx - total / 2;
+  for (i = 0; i < chars.length; i++) {
+    var w = g.measureText(chars[i]).width;
+    g.fillText(chars[i], x + w / 2, y);
+    x += w + gap;
+  }
+}
+
+function fitText(g, text, base, maxW, weight) {
+  var size = base;
+  while (size > 14) {
+    g.font = weight + ' ' + size + 'px ' + SANS;
+    if (g.measureText(text).width <= maxW) break;
+    size -= 2;
+  }
+  return size;
+}
+
+function buildShareCanvas() {
+  var W = 1080, H = 1440;
+  var n = state.history.length;
+  var success = state.hit;
+  var last = state.history[n - 1];
+
+  var c = document.createElement('canvas');
+  c.width = W;
+  c.height = H;
+  var g = c.getContext('2d');
+  g.textAlign = 'center';
+  g.textBaseline = 'alphabetic';
+
+  g.fillStyle = '#F6F1E4';
+  g.fillRect(0, 0, W, H);
+
+  g.fillStyle = '#A79E8D';
+  g.font = '500 22px ' + SANS;
+  spaced(g, 'SAME WORD', W / 2, 124, 11);
+
+  g.fillStyle = '#6B6459';
+  g.font = '400 30px ' + SANS;
+  g.fillText('同词相遇', W / 2, 180);
+
+  g.fillStyle = '#BF4229';
+  g.fillRect(W / 2 - 26, 232, 52, 3);
+
+  var listTop, listBottom;
+  if (success) {
+    g.fillStyle = '#1E1B16';
+    g.font = '600 84px ' + SANS;
+    g.fillText('用了 ' + n + ' 轮', W / 2, 372);
+
+    g.fillStyle = '#6B6459';
+    g.font = '400 28px ' + SANS;
+    g.fillText('我们都想到了', W / 2, 428);
+
+    g.fillStyle = '#BF4229';
+    var ws = fitText(g, '「' + last.a + '」', 88, 900, '600');
+    g.font = '600 ' + ws + 'px ' + SANS;
+    g.fillText('「' + last.a + '」', W / 2, 530);
+
+    listTop = 620;
+    listBottom = 1320;
+  } else {
+    g.fillStyle = '#1E1B16';
+    g.font = '600 72px ' + SANS;
+    g.fillText('没遇上', W / 2, 372);
+
+    g.fillStyle = '#6B6459';
+    g.font = '400 28px ' + SANS;
+    g.fillText('十五轮过去，谁也没猜中谁', W / 2, 428);
+
+    listTop = 530;
+    listBottom = 1320;
+  }
+
+  var rowH = Math.min(92, (listBottom - listTop) / n);
+  var startY = listTop + ((listBottom - listTop) - n * rowH) / 2;
+  var fs = Math.max(20, Math.min(34, rowH * 0.46));
+  var colMax = W / 2 - 96;
+
+  state.history.forEach(function (r, i) {
+    var cy = startY + rowH * i + rowH / 2;
+
+    var s1 = fitText(g, r.a, fs, colMax, '500');
+    g.font = '500 ' + s1 + 'px ' + SANS;
+    g.textAlign = 'right';
+    g.fillStyle = '#8E2E1C';
+    g.fillText(r.a, W / 2 - 46, cy + s1 * 0.35);
+
+    var s2 = fitText(g, r.b, fs, colMax, '500');
+    g.font = '500 ' + s2 + 'px ' + SANS;
+    g.textAlign = 'left';
+    g.fillStyle = '#1F4A67';
+    g.fillText(r.b, W / 2 + 46, cy + s2 * 0.35);
+
+    g.textAlign = 'center';
+    g.font = '400 ' + Math.max(14, fs * 0.62) + 'px ' + SANS;
+    g.fillStyle = r.hit ? '#BF4229' : '#A79E8D';
+    g.fillText(r.hit ? '＝' : '×', W / 2, cy + fs * 0.28);
+  });
+
+  g.textAlign = 'center';
+  g.fillStyle = '#A79E8D';
+  g.font = '400 23px ' + SANS;
+  g.fillText('同词相遇 · 你也可以来一局', W / 2, 1382);
+
+  return c;
+}
+
+function shareCard() {
+  var c = buildShareCanvas();
+  if (!c.toBlob) { toast('这个浏览器存不了图'); return; }
+
+  c.toBlob(function (blob) {
+    if (!blob) { toast('图没生成出来'); return; }
+    var file = null;
+    try { file = new File([blob], 'tongci.png', { type: 'image/png' }); } catch (e) {}
+
+    if (file && navigator.canShare && navigator.canShare({ files: [file] }) && navigator.share) {
+      navigator.share({ files: [file], title: '同词相遇' }).catch(function () {});
+      return;
+    }
+
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = '同词相遇.png';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+    toast('已保存，去相册看看');
+  }, 'image/png');
+}
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('sw.js').catch(function () {});
+  });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+_AI工作区*/
+.workbuddy/
+.DS_Store
+Thumbs.db
+*.log

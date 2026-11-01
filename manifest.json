@@ -1,0 +1,33 @@
+{
+  "name": "同词相遇",
+  "short_name": "同词相遇",
+  "description": "两个人各自想一个词，同时揭晓。没撞上，就从这两个词继续联想，直到说出同一个词。",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F6F1E4",
+  "theme_color": "#F6F1E4",
+  "lang": "zh-CN",
+  "categories": ["games", "entertainment"],
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
